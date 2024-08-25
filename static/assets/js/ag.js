@@ -131,7 +131,7 @@ function p2048() {
 
 function rbx() {
   alert(`This app might not work as expected. Refresh the page if it detects a VPN.`);
-  openAg('https://educationbluesky.com/apps/roblox-corporation/5349/roblox.html');
+  openAg('https://educationbluesky.com');
 }
 
 function slope() {
