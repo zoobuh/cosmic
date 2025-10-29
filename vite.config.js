@@ -153,10 +153,10 @@ export default defineConfig(({ command }) => {
     },
     server: {
       proxy: {
-        '/assets/img': {
+        '/assets': {
           target: 'https://dogeub-assets.pages.dev',
           changeOrigin: true,
-          rewrite: (path) => path.replace(/^\/assets\/img/, '/img'),
+          rewrite: (path) => path.replace(/^\/assets/, ''),
         },
         '/assets-fb': {
           target: 'https://dogeub-assets.ftp.sh',

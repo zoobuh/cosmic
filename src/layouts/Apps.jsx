@@ -15,6 +15,35 @@ const SORT_OPTIONS = [
   { value: 'newest', label: 'Newest' },
 ];
 
+const transformExternalGame = (game) => ({
+  appName: game.Title,
+  desc: game.Category?.[0] || 'Game',
+  icon: game.Asset?.find(url => url.includes('512x512')) || game.Asset?.[1] || game.Asset?.[0] || '',
+  url: game.Url,
+  disabled: false,
+});
+
+const loadExternalGames = async () => {
+  try {
+    const response = await fetch('/assets/games.json');
+    if (!response.ok) {
+      console.warn('External games file not found at /assets/games.json');
+      return [];
+    }
+    const contentType = response.headers.get('content-type');
+    if (!contentType || !contentType.includes('application/json')) {
+      console.warn('External games file is not JSON format');
+      return [];
+    }
+    const externalGames = await response.json();
+    return Array.isArray(externalGames) ? externalGames.map(transformExternalGame) : [];
+  } catch (error) {
+    console.error('Failed to load external games:', error);
+    return [];
+  }
+};
+
+
 const AppCard = memo(({ app, onClick, fallbackMap, onImgError, itemTheme, itemStyles }) => (
   <div
     key={app.appName}
@@ -36,7 +65,8 @@ const AppCard = memo(({ app, onClick, fallbackMap, onImgError, itemTheme, itemSt
 const Apps = memo(({ type = 'default', data = appsData }) => {
   const nav = useNavigate();
   const { options } = useOptions();
-  const appsList = useMemo(() => data[type] || [], [data, type]);
+  const [appsList, setAppsList] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
 
   const [q, setQ] = useState('');
   const [sort, setSort] = useState('categorical');
@@ -45,7 +75,31 @@ const Apps = memo(({ type = 'default', data = appsData }) => {
   const sortRef = useRef(null);
   const [fallback, setFallback] = useState({});
 
-  const perPage = options.itemsPerPage || 20;
+  const perPage = options.loadExternalGames && options.itemsPerPage === 10000 
+    ? 100 
+    : (options.itemsPerPage || 20);
+
+  useEffect(() => {
+    const loadGames = async () => {
+      setIsLoading(true);
+      const baseGames = data[type] || [];
+      
+      if (type === 'games' && options.loadExternalGames) {
+        const externalGames = await loadExternalGames();
+        const baseGameNames = new Set(baseGames.map(g => g.appName.toLowerCase()));
+        const uniqueExternalGames = externalGames.filter(
+          g => !baseGameNames.has(g.appName.toLowerCase())
+        );
+        setAppsList([...baseGames, ...uniqueExternalGames]);
+      } else {
+        setAppsList(baseGames);
+      }
+      
+      setIsLoading(false);
+    };
+    
+    loadGames();
+  }, [data, type, options.loadExternalGames]);
 
   useEffect(() => {
     const close = (e) => !sortRef.current?.contains(e.target) && setShowSort(false);
@@ -123,9 +177,15 @@ const Apps = memo(({ type = 'default', data = appsData }) => {
       </div>
 
       <div className="flex flex-wrap justify-center pb-2">
-        {filtered.paged.map((app) => (
-          <AppCard key={app.appName} app={app} onClick={navApp} fallbackMap={fallback} onImgError={handleImgError} itemTheme={{ ...theme, current: options.theme || 'default' }} itemStyles={styles} />
-        ))}
+        {isLoading ? (
+          <div className="flex items-center justify-center w-full py-20">
+            <div className="text-sm opacity-70">Loading games...</div>
+          </div>
+        ) : (
+          filtered.paged.map((app) => (
+            <AppCard key={app.appName} app={app} onClick={navApp} fallbackMap={fallback} onImgError={handleImgError} itemTheme={{ ...theme, current: options.theme || 'default' }} itemStyles={styles} />
+          ))
+        )}
       </div>
 
       {filtered.filteredApps.length > perPage && (
