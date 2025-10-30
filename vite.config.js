@@ -5,16 +5,16 @@ import react from '@vitejs/plugin-react-swc';
 import vitePluginBundleObfuscator from 'vite-plugin-bundle-obfuscator';
 import { viteStaticCopy } from 'vite-plugin-static-copy';
 import { logging, server as wisp } from '@mercuryworkshop/wisp-js/server';
-import { createBareServer } from "@tomphttp/bare-server-node";
+import { createBareServer } from '@tomphttp/bare-server-node';
 import { bareModulePath } from '@mercuryworkshop/bare-as-module3';
 import { libcurlPath } from '@mercuryworkshop/libcurl-transport';
 import { baremuxPath } from '@mercuryworkshop/bare-mux/node';
-import { scramjetPath } from "@mercuryworkshop/scramjet/path";
+import { scramjetPath } from '@mercuryworkshop/scramjet/path';
 import { uvPath } from '@titaniumnetwork-dev/ultraviolet';
-import dotenv from "dotenv";
+import dotenv from 'dotenv';
 
 dotenv.config();
-const useBare = process.env.BARE === "false" ? false : true;
+const useBare = process.env.BARE === 'false' ? false : true;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 logging.set_level(logging.NONE);
@@ -118,12 +118,12 @@ export default defineConfig(({ command }) => {
             }
           });
         },
-      }
+      },
     ],
     build: {
-      esbuild: { 
+      esbuild: {
         legalComments: 'none',
-        treeShaking: true
+        treeShaking: true,
       },
       rollupOptions: {
         input: {
@@ -133,16 +133,18 @@ export default defineConfig(({ command }) => {
         output: {
           entryFileNames: '[hash].js',
           chunkFileNames: (chunk) =>
-            chunk.name === 'vendor-modules' ? 'chunks/vendor-modules.[hash].js' : 'chunks/[hash].js',
-          assetFileNames: 'assets/[hash].[ext]',
+            chunk.name === 'vendor-modules'
+              ? 'chunks/vendor-modules.[hash].js'
+              : 'chunks/[hash].js',
+          assetFileNames: 'styles/[hash].[ext]',
           manualChunks: (id) => (id.includes('node_modules') ? 'vendor-modules' : undefined),
         },
         treeshake: {
-          moduleSideEffects: 'no-external'
-        }
+          moduleSideEffects: 'no-external',
+        },
       },
       minify: 'esbuild',
-      sourcemap: false
+      sourcemap: false,
     },
     css: {
       modules: {
@@ -166,7 +168,7 @@ export default defineConfig(({ command }) => {
       },
     },
     define: {
-      __ENVIRONMENT__: JSON.stringify(environment)
-    }
+      __ENVIRONMENT__: JSON.stringify(environment),
+    },
   };
 });
