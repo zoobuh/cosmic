@@ -5,7 +5,7 @@ import {
   navScaleConfig,
   searchConfig,
   prConfig,
-  designConfig
+  designConfig,
 } from '/src/utils/config';
 
 export const privacyConfig = ({ options, updateOption, openPanic }) => ({
@@ -78,7 +78,7 @@ export const customizeConfig = ({ options, updateOption }) => ({
   },
   2: {
     name: 'Background Design',
-    desc: 'Customize the site\'s background design.',
+    desc: "Customize the site's background design.",
     config: designConfig,
     value: find(designConfig, (c) => c.value?.bgDesign === options.bgDesign, 0),
     type: 'select',
@@ -86,9 +86,21 @@ export const customizeConfig = ({ options, updateOption }) => ({
   },
   3: {
     name: 'Apps per Page',
-    desc: 'Number of apps to show per page ("All" will show everything).',
-    config: appsPerPageConfig,
-    value: find(appsPerPageConfig, (c) => c.value.itemsPerPage === (options.itemsPerPage ?? 20), 2),
+    desc: options.loadExternalGames
+      ? 'Number of apps to show per page (limited when external games are enabled).'
+      : 'Number of apps to show per page ("All" will show everything).',
+    config: options.loadExternalGames
+      ? appsPerPageConfig.filter((c) => c.value.itemsPerPage !== 10000)
+      : appsPerPageConfig,
+    value: (() => {
+      const currentValue = options.itemsPerPage ?? 20;
+      const effectiveValue =
+        options.loadExternalGames && currentValue === 10000 ? 100 : currentValue;
+      const configToUse = options.loadExternalGames
+        ? appsPerPageConfig.filter((c) => c.value.itemsPerPage !== 10000)
+        : appsPerPageConfig;
+      return find(configToUse, (c) => c.value.itemsPerPage === effectiveValue, 2);
+    })(),
     type: 'select',
     action: (a) => updateOption(a),
   },
@@ -137,6 +149,13 @@ export const browsingConfig = ({ options, updateOption }) => ({
 
 export const advancedConfig = ({ options, updateOption }) => ({
   1: {
+    name: 'Experimental Games',
+    desc: 'Load additional 20,000 games. This feature is experimental and WILL lag the site.',
+    value: options.loadExternalGames ?? false,
+    type: 'switch',
+    action: (b) => setTimeout(() => updateOption({ loadExternalGames: b }), 100),
+  },
+  2: {
     name: 'beforeunload Event',
     desc: 'Show a confirmation when attempting to leave the site.',
     value: !!options.beforeUnload,
@@ -146,14 +165,16 @@ export const advancedConfig = ({ options, updateOption }) => ({
       location.reload();
     },
   },
-  2: {
+  3: {
     name: 'Wisp Config',
     desc: 'Configure the websocket server location.',
-    value: options.wServer || `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/wisp/`,
+    value:
+      options.wServer ||
+      `${location.protocol === 'https:' ? 'wss:' : 'ws:'}//${location.host}/wisp/`,
     type: 'input',
     action: (b) => updateOption({ wServer: b }),
   },
-  3: {
+  4: {
     name: 'Reset Instance',
     desc: 'Clear your site data if you are having issues.',
     type: 'button',
